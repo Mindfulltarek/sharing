@@ -1,5 +1,5 @@
 {
-  "name": "sharing-demo",
+  "name": "sharing",
   "private": true,
   "version": "1.0.0",
   "type": "module",
@@ -13,7 +13,7 @@
     "build": "npm run typecheck && npm run typecheck:api && vite build",
     "preview": "vite preview --host 0.0.0.0",
     "db:migrate": "node scripts/migrate.mjs",
-    "test": "tsx --test server/tests/*.test.ts"
+    "test": "tsx --test server/tests/*.test.ts src/tests/*.test.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.2.0",
