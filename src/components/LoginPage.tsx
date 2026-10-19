@@ -1,33 +1,186 @@
-import { ArrowLeft, ArrowRight, Check, LockKeyhole, ShieldCheck, Sparkles } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { ArrowLeft, ArrowRight, Check, Info, KeyRound, LockKeyhole, ShieldCheck, Sparkles } from 'lucide-react';
 import { Logo } from './common';
 
-export default function LoginPage({ onGoogleDemo, onContinueDemo, onBack }: { onGoogleDemo: () => void; onContinueDemo: () => void; onBack: () => void }) {
+interface GoogleCredentialResponse {
+  credential: string;
+}
+
+interface GoogleIdentityApi {
+  initialize: (options: {
+    client_id: string;
+    callback: (response: GoogleCredentialResponse) => void;
+    auto_select?: boolean;
+    cancel_on_tap_outside?: boolean;
+    ux_mode?: 'popup' | 'redirect';
+  }) => void;
+  renderButton: (parent: HTMLElement, options: Record<string, unknown>) => void;
+  cancel: () => void;
+}
+
+declare global {
+  interface Window {
+    google?: { accounts?: { id?: GoogleIdentityApi } };
+  }
+}
+
+export default function LoginPage({
+  clientId,
+  onGoogleCredential,
+  onGoogleSuccess,
+  onContinueWithoutAccount,
+  onBack,
+}: {
+  clientId: string;
+  onGoogleCredential: (credential: string) => Promise<{ email: string }>;
+  onGoogleSuccess: (user: { email: string }) => void;
+  onContinueWithoutAccount: () => void;
+  onBack: () => void;
+}) {
+  const googleButtonRef = useRef<HTMLDivElement>(null);
+  const authAttemptRef = useRef(0);
+  const [googleLoaded, setGoogleLoaded] = useState(false);
+  const [googleScriptError, setGoogleScriptError] = useState(false);
+  const [scriptRetry, setScriptRetry] = useState(0);
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (!clientId) return;
+    if (window.google?.accounts?.id) {
+      setGoogleLoaded(true);
+      return;
+    }
+    let script = document.getElementById('google-identity-services') as HTMLScriptElement | null;
+    const createdHere = !script;
+    if (!script) {
+      script = document.createElement('script');
+      script.id = 'google-identity-services';
+      script.src = 'https://accounts.google.com/gsi/client';
+      script.async = true;
+      script.defer = true;
+    }
+    const markLoaded = () => setGoogleLoaded(true);
+    const markFailed = () => setGoogleScriptError(true);
+    script.addEventListener('load', markLoaded);
+    script.addEventListener('error', markFailed);
+    if (createdHere) document.head.appendChild(script);
+    return () => {
+      script?.removeEventListener('load', markLoaded);
+      script?.removeEventListener('error', markFailed);
+    };
+  }, [clientId, scriptRetry]);
+
+  useEffect(() => {
+    const element = googleButtonRef.current;
+    const identity = window.google?.accounts?.id;
+    if (!clientId || !googleLoaded || !identity || !element) return;
+    element.replaceChildren();
+    identity.initialize({
+      client_id: clientId,
+      auto_select: false,
+      cancel_on_tap_outside: true,
+      ux_mode: 'popup',
+      callback: (response) => {
+        if (!response.credential) {
+          setError('Google did not return an ID token. Try again.');
+          return;
+        }
+        const attempt = ++authAttemptRef.current;
+        setError('');
+        setBusy(true);
+        void onGoogleCredential(response.credential)
+          .then((user) => {
+            if (authAttemptRef.current !== attempt) return;
+            authAttemptRef.current += 1;
+            onGoogleSuccess(user);
+          })
+          .catch((authError: unknown) => {
+            if (authAttemptRef.current !== attempt) return;
+            setError(authError instanceof Error ? authError.message : 'Google sign-in could not be completed.');
+          })
+          .finally(() => {
+            if (authAttemptRef.current === attempt) setBusy(false);
+          });
+      },
+    });
+    identity.renderButton(element, {
+      type: 'standard',
+      theme: 'outline',
+      size: 'large',
+      text: 'continue_with',
+      shape: 'rectangular',
+      logo_alignment: 'left',
+      width: Math.max(160, Math.min(360, Math.floor(element.getBoundingClientRect().width || 360))),
+      locale: 'en',
+    });
+  }, [clientId, googleLoaded, onGoogleCredential, onGoogleSuccess]);
+
+  const explainConfiguration = () => {
+    if (!clientId) {
+      setError('Google sign-in needs VITE_GOOGLE_CLIENT_ID in .env.local or Vercel and the matching GOOGLE_CLIENT_ID on the server.');
+      return;
+    }
+    setError('');
+    setGoogleScriptError(false);
+    document.getElementById('google-identity-services')?.remove();
+    setScriptRetry((attempt) => attempt + 1);
+  };
+
+  const continueLocally = () => {
+    authAttemptRef.current += 1;
+    setBusy(false);
+    onContinueWithoutAccount();
+  };
+
+  const returnToLanding = () => {
+    authAttemptRef.current += 1;
+    setBusy(false);
+    onBack();
+  };
+
   return (
     <main className="login-page">
       <div className="login-background-glow login-glow-one" /><div className="login-background-glow login-glow-two" />
-      <header className="login-header"><button className="logo-link" onClick={onBack} aria-label="Back to Sharing landing page"><Logo /></button><span className="login-header-demo"><span className="status-pulse" /> DEMO ACCESS</span></header>
+      <header className="login-header">
+        <button className="logo-link" onClick={returnToLanding} aria-label="Back to Sharing landing page"><Logo /></button>
+        <span className="login-header-status"><span className="status-pulse" /> ACCOUNT ACCESS</span>
+      </header>
       <div className="login-layout">
         <section className="login-story">
           <div className="login-story-pill"><Sparkles size={13} /> A THOUGHTFUL WAY TO SHARE</div>
           <h1>Your files.<br /><span className="hero-gradient-text">One simple share.</span></h1>
-          <p>Sign-in is optional in this preview. Open the demo workspace now and explore projects, share links, and a separate private Vault.</p>
-          <div className="login-story-points"><span><Check size={14} /> No account needed to explore</span><span><Check size={14} /> Sample projects are saved locally</span><span><Check size={14} /> Cloud sharing is not connected yet</span></div>
+          <p>Sign in with Google to verify your account, or continue without signing in.</p>
+          <div className="login-story-points">
+            <span><Check size={14} /> Protected API access after account verification</span>
+            <span><Check size={14} /> A separate private Vault</span>
+            <span><Check size={14} /> A browser-only option remains available</span>
+          </div>
           <div className="login-illustration" aria-hidden="true"><div className="login-illus-orb" /><div className="login-illus-file illus-file-one"><span className="illus-file-glyph glyph-violet">S</span><i /><i /></div><div className="login-illus-file illus-file-two"><span className="illus-file-glyph glyph-rose">↗</span><i /><i /></div><div className="login-illus-link"><LockKeyhole size={14} /><span>One simple link</span><div /></div><div className="login-illus-star">✦</div></div>
         </section>
         <section className="login-card" aria-labelledby="login-title">
           <div className="login-card-brand"><span className="login-mini-mark"><Logo small /></span></div>
           <div className="login-card-kicker">WELCOME TO SHARING</div>
           <h2 id="login-title">Your workspace<br />is ready.</h2>
-          <p>Choose how you’d like to continue. This preview works without a Google account.</p>
-          <button type="button" className="google-demo-button" onClick={onGoogleDemo}><GoogleGlyph /><span>Continue with Google</span><span className="google-demo-tag">DEMO</span></button>
+          <p>Choose how you’d like to continue. Google sign-in requires the website and server client IDs to be configured.</p>
+          <div className="google-signin-slot" role="group" aria-label="Sign in with Google" aria-busy={busy || Boolean(clientId && !googleLoaded)} aria-live="polite">
+            {clientId && googleLoaded ? <div className={`google-identity-button${busy ? ' google-signin-busy' : ''}`} ref={googleButtonRef} /> : (
+              <button type="button" className="google-auth-button-placeholder" onClick={explainConfiguration} disabled={busy || Boolean(clientId && !googleScriptError)}>
+                <GoogleGlyph />
+                <span>{busy ? 'Signing in…' : clientId ? googleScriptError ? 'Retry Google sign-in' : 'Loading Google…' : 'Continue with Google'}</span>
+              </button>
+            )}
+          </div>
+          {googleScriptError && <div className="login-inline-error" role="alert"><Info size={14} /> Google Identity Services could not load. Check the connection or content blocker.</div>}
+          {error && <div className="login-inline-error" role="alert"><Info size={14} /> {error}</div>}
           <div className="login-divider"><span /> <small>OR</small> <span /></div>
-          <button type="button" className="button button-primary login-continue-button" onClick={onContinueDemo}>Continue in demo <ArrowRight size={16} /></button>
-          <div className="login-demo-note"><ShieldCheck size={15} /><span><strong>Demo mode:</strong> The Google button opens a local sample workspace. No OAuth connection or Google account is used.</span></div>
-          <button type="button" className="login-back-link" onClick={onBack}><ArrowLeft size={14} /> Back to the landing page</button>
-          <div className="login-policy-note"><LockKeyhole size={12} /> Your demo data stays in this browser.</div>
+          <button type="button" className="button button-primary login-continue-button" onClick={continueLocally}>Continue without account <ArrowRight size={16} /></button>
+          <div className="login-local-note"><ShieldCheck size={15} /><span><strong>Browser workspace:</strong> Continuing without an account uses local project metadata. It does not sign you in or connect cloud storage.</span></div>
+          <button type="button" className="login-back-link" onClick={returnToLanding}><ArrowLeft size={14} /> Back to the landing page</button>
+          <div className="login-policy-note"><KeyRound size={12} /> Google ID tokens are sent to the server for verification.</div>
         </section>
       </div>
-      <footer className="login-footer"><span>Developed by <a href="https://www.instagram.com/mindfulltarek/" target="_blank" rel="noreferrer">TAREK</a></span><span>© 2026 Sharing · Demo preview</span></footer>
+      <footer className="login-footer"><span>Developed by <a href="https://www.instagram.com/mindfulltarek/" target="_blank" rel="noreferrer">TAREK</a></span><span>© 2026 Sharing · Account access</span></footer>
     </main>
   );
 }

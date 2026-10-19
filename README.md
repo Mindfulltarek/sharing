@@ -1,8 +1,8 @@
-# Sharing — local demo plus Vercel-ready API
+# Sharing — browser workspace and Vercel API
 
-Sharing is a responsive React/Vite file-sharing interface with a marketing page, a project workspace, local demo share pages, QR/ZIP flows, and a separate Vault. The browser demo remains available without login. A Nitro API, Neon Postgres schema, and private Vercel Blob integration are included as the production backend foundation; the current demo UI does **not** call that backend until Google sign-in and a cloud-mode UI connection are added.
+Sharing is a responsive React/Vite file-sharing interface with a marketing page, project workspace, share pages, QR/ZIP flows, and a separate Vault. Google Identity Services sign-in is implemented on `/login`; the returned ID token is sent to `/api/v1/me` for server-side verification. **Sign-in verifies an account, but the current project and Vault UI still use browser-local services; it does not yet upload or sync workspace data to cloud storage.** The browser workspace remains available without an account or credentials.
 
-## Run the demo locally
+## Run locally
 
 Requirements: Node.js 20+ and npm.
 
@@ -11,39 +11,41 @@ npm install
 npm run dev
 ```
 
-Use the URL printed by Vite/Nitro (normally `http://localhost:3000`). `/` and `/welcome` show the landing page; `/login` offers a simulated Google button and **Continue in demo**; `/app` remains directly accessible without credentials. The existing `/share/:token` route resolves against local browser data only.
+Use the URL printed by Vite/Nitro (normally `http://localhost:3000`). `/` and `/welcome` show the landing page; `/login` offers Google sign-in when `VITE_GOOGLE_CLIENT_ID` is configured, plus **Continue without account**. `/app` remains directly accessible without credentials. `/share/:token` resolves against local browser data only.
 
-The demo needs no environment variables. Creating `.env.local` is optional unless you are setting up the backend; never put real secrets in a `VITE_` variable.
+The local browser workspace needs no environment variables. Without a Google client ID, the Google button explains which settings are missing; sign-in-free access still works. Copy `.env.example` to `.env.local` only when configuring Google and/or the backend. Never put secrets in a `VITE_` variable; the Google client ID is public, but database credentials and API secrets are not.
 
 ## Vercel build and deployment
 
 The Vite config installs Nitro's Vite plugin and targets Vercel. `npm run build` produces Vercel's Build Output API under `.vercel/output`; do not override the output directory to `dist` in project settings. The setup follows [Nitro's Vite integration](https://vercel.com/docs/frameworks/full-stack/vite-with-nitro) and [filesystem routing](https://nitro.build/docs/routing).
 
 1. Import the repository into Vercel and use `npm run build` as the build command. The Nitro plugin selects the Vercel Node.js runtime.
-2. Create a Neon Postgres database and a **private** Vercel Blob store. Keep the Blob store private; browser clients must never receive a read/write store token.
-3. Add these variables in Vercel Project Settings. Apply them to the Production environment and any Preview environments you actually want to enable:
-   - `DATABASE_URL` — Neon connection string.
-   - `GOOGLE_CLIENT_ID` — the Google OAuth client ID that will be used as the ID-token audience after you add the sign-in UI.
+2. Configure the Google Auth Platform consent/branding screen, then create an OAuth **Web application** client. If the app is in Testing mode, add your Google account as a test user. Add the deployed website origin (and any local development origin you use) under Authorized JavaScript origins. This implementation uses the Google Identity Services popup flow; it does not need a redirect URI.
+3. Create a Neon Postgres database and a **private** Vercel Blob store. Keep the Blob store private; browser clients must never receive a read/write store token.
+4. Add these variables in Vercel Project Settings. The `VITE_` value is embedded at build time, so redeploy after changing it. Apply values to Production and any Preview environments you intend to enable:
+   - `VITE_GOOGLE_CLIENT_ID` — the public Web client ID used by the sign-in button.
+   - `GOOGLE_CLIENT_ID` — the **same** client ID, used by the server as the ID-token audience.
+   - `DATABASE_URL` — Neon connection string; account verification upserts the user record here.
    - `ACCESS_TOKEN_SECRET`, `SHARE_RATE_LIMIT_PEPPER`, and `CRON_SECRET` — independent random secrets, each at least 32 bytes. Generate with `openssl rand -base64 48` and use a different value for each.
    - `BLOB_STORE_ID` and `BLOB_WEBHOOK_PUBLIC_KEY` — the private Blob store identifier and its signed-upload callback verification key.
    - Vercel OIDC must be available to the deployed function for private Blob operations. `BLOB_READ_WRITE_TOKEN` is supported for local development or where OIDC is not used; never expose it to browser code.
-4. Apply the database migration once, using a trusted terminal with `DATABASE_URL` set (or pulled into `.env.local`):
+5. Apply the database migration once, using a trusted terminal with `DATABASE_URL` set (or pulled into `.env.local`):
 
    ```bash
    npm run db:migrate
    ```
 
-5. Deploy. The API health endpoint is `GET /api/v1/health`; it returns 200 only after the database is configured and reachable. A 503 before `DATABASE_URL` and the schema are ready is expected.
+6. Deploy. The API health endpoint is `GET /api/v1/health`; it returns 200 only after the database is configured and reachable. A 503 before `DATABASE_URL` and the schema are ready is expected.
 
-Vercel credentials and a live database/storage project are not present in this workspace. The generated Vercel build and local route behavior were checked, but an actual deployment, Google token exchange, Neon migration, and private Blob upload/download still need to be verified with your own project credentials.
+Google sign-in succeeds only when the OAuth client is configured for the actual website origin, both client ID values match, the server can verify Google's keys, and `DATABASE_URL` plus the account table are ready. Vercel environment changes require a new deployment.
 
-## Authentication boundary — Google sign-in is intentionally not added
+This workspace has no real Google client ID, Neon database, or Blob credentials. The build and local API behavior were checked, but a real Google sign-in, production migration, and private Blob upload/download still need to be verified with your project credentials.
 
-The `/login` Google-looking action is still a labeled demo shortcut, not OAuth. Demo continuation remains one click and does not depend on Google, credentials, or backend setup.
+## Authentication boundary
 
-Production API routes require a Google **ID token** in `Authorization: Bearer <id-token>`. The server verifies its signature against Google's published keys, checks the configured audience and verified email, and creates/updates the account row. It never trusts a client-supplied user ID. Until `GOOGLE_CLIENT_ID` is configured and you add the Google sign-in UI, the authenticated API returns a configuration/auth error rather than exposing project, file, or Vault data.
+The Google button uses Google Identity Services to obtain an ID token; it is not a simulated button. The browser sends that token to `GET /api/v1/me`. The server verifies its signature against Google's published keys, checks issuer, audience, expiry, and verified email, then creates or updates the account row. It never trusts a client-supplied user ID. The token stays in JavaScript memory only; there is no persistent browser session, and a page reload requires signing in again.
 
-`src/services/cloudApi.ts` is the browser-side integration seam. After adding Google Identity Services, pass the returned ID token to `setGoogleIdToken(idToken)` and use `cloudApi` for the cloud API. The token and short-lived Vault/share access tokens are held in memory only, not `localStorage`. The present UI continues to use the local demo services; it has not been silently switched to cloud mode.
+The ID token is held in memory for authenticated API calls. However, the current Workspace UI has not been switched to `cloudApi`: projects, Vault metadata, sample data, and share links are still managed by local browser services. **A successful Google sign-in does not mean project upload, cloud sync, or cloud Vault storage is active.** Continuing without an account clears the in-memory Google token and opens the same local workspace.
 
 ## Backend included
 
@@ -52,7 +54,7 @@ Production API routes require a Google **ID token** in `Authorization: Bearer <i
 - `server/auth.ts` — Google ID-token verification and account upsert.
 - `server/security.ts` — scrypt passphrase verifiers, purpose-scoped short-lived tokens, high-entropy share tokens, and keyed IP digests for rate limits.
 - [`@vercel/blob` private storage](https://vercel.com/docs/vercel-blob/private-storage) — short-lived, path-scoped presigned uploads; server-side completion callback verification; authenticated streaming downloads and deletion.
-- `src/services/cloudApi.ts` — future frontend adapter for project, shared-link, upload/download, and separate Vault calls.
+- `src/services/cloudApi.ts` — browser API client for project, shared-link, upload/download, and separate Vault calls. The login flow currently calls only `/api/v1/me`; workspace actions are not yet wired to these cloud methods.
 
 Implemented API surface:
 
@@ -106,7 +108,7 @@ The automated tests cover password hashing, scoped tokens, expiry checks, file-p
 
 - `src/components/` — landing page, local demo workspace, share page, dialogs, Settings, and Vault.
 - `src/services.ts`, `src/services/ports.ts`, `src/services/adapters.ts` — existing local demo services and adapter contracts.
-- `src/services/cloudApi.ts` — cloud API client to connect after Google sign-in is added.
+- `src/services/cloudApi.ts` — cloud API client; the account-verification call is connected, while project/Vault UI actions still use local adapters.
 - `src/types.ts` and `src/demoData.ts` — UI models and clearly local sample data.
 - `server/` — Nitro route entry and Hono API, Google token verification, Postgres access, and security helpers.
 - `migrations/` and `scripts/migrate.mjs` — database schema and migration runner.

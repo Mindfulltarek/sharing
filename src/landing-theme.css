@@ -182,7 +182,7 @@
 .preview-glass-note svg { color: #ffb28f; }
 .preview-caption { color: #e0d3f0; }
 .caption-live-dot { background: #8ce9ef; box-shadow: 0 0 10px rgba(140, 233, 239, .85); }
-.caption-demo { color: #fff0ff; background: rgba(255, 170, 150, .18); border-color: rgba(255, 197, 179, .35); }
+.caption-preview { color: #fff0ff; background: rgba(255, 170, 150, .18); border-color: rgba(255, 197, 179, .35); }
 .preview-orbit-one { background: rgba(113, 88, 228, .42); }
 .preview-orbit-two { background: rgba(246, 103, 168, .25); }
 .hero-floating-elements { position: absolute; inset: 0; z-index: 5; pointer-events: none; }

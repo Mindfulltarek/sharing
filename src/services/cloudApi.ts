@@ -13,7 +13,7 @@ export class CloudApiError extends Error {
   }
 }
 
-// Tokens stay in memory only. The local demo remains independent of this client.
+// Tokens stay in memory only. The browser-local workspace remains independent of this client.
 let googleIdToken: string | null = null;
 let vaultAccessToken: string | null = null;
 const shareAccessTokens = new Map<string, string>();

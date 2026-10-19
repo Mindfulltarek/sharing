@@ -11,8 +11,11 @@ import PublicSharePage from './components/PublicSharePage';
 import { ConfirmDialog, CreateProjectModal, FilePreviewDialog, GoogleInfoModal, ProjectSettingsModal, ReuploadModal, ShareDialog } from './components/Dialogs';
 import { canPreviewFile, copyText, ToastStack } from './components/common';
 import type { WorkspaceProps } from './components/Workspace';
+import { CloudApiError, cloudApi, setGoogleIdToken } from './services/cloudApi';
 
- type AppRoute = { type: 'landing' } | { type: 'login' } | { type: 'app' } | { type: 'share'; token: string };
+const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID?.trim() ?? '';
+
+type AppRoute = { type: 'landing' } | { type: 'login' } | { type: 'app' } | { type: 'share'; token: string };
  type DetailState = { id: string; collection: 'projects' | 'shared' } | null;
  type CreateValue = { name: string; files: File[]; privacy: PrivacyMode; password?: string; expiresAt: number | null };
 
@@ -106,6 +109,36 @@ export default function App() {
     setDetail(null);
     navigate('/app');
   }, [navigate]);
+
+  const handleGoogleCredential = useCallback(async (credential: string): Promise<{ email: string }> => {
+    setGoogleIdToken(credential);
+    try {
+      const { user } = await cloudApi.me();
+      return user;
+    } catch (authError) {
+      setGoogleIdToken(null);
+      if (authError instanceof CloudApiError) {
+        if (authError.status === 503) {
+          throw new Error('Google sent an ID token, but server verification is not ready. Check GOOGLE_CLIENT_ID, DATABASE_URL, and the database migration in Vercel.');
+        }
+        if (authError.status === 401) {
+          throw new Error('Google could not verify this account. Check the authorized website origin and make sure both client ID settings match.');
+        }
+        throw new Error(authError.message);
+      }
+      throw new Error('The server could not verify your Google sign-in. Check the API deployment and try again.');
+    }
+  }, []);
+
+  const completeGoogleSignIn = useCallback((user: { email: string }) => {
+    openApp('projects');
+    addToast('Google account verified', `Signed in as ${user.email}. The current workspace UI still stores project data in this browser.`, 'info');
+  }, [addToast, openApp]);
+
+  const continueWithoutAccount = useCallback(() => {
+    setGoogleIdToken(null);
+    openApp('projects');
+  }, [openApp]);
 
   const createProject = useCallback(async (value: CreateValue): Promise<Project> => {
     const now = Date.now();
@@ -315,7 +348,7 @@ export default function App() {
   return (
     <>
       {route.type === 'landing' && <LandingPage onOpenApp={() => navigate('/login')} onOpenVault={() => openApp('vault')} />}
-      {route.type === 'login' && <LoginPage onGoogleDemo={() => { openApp('projects'); addToast('Google sign-in demo', 'No Google account is connected; this opened the local demo workspace.', 'info'); }} onContinueDemo={() => openApp('projects')} onBack={() => navigate('/welcome')} />}
+      {route.type === 'login' && <LoginPage clientId={googleClientId} onGoogleCredential={handleGoogleCredential} onGoogleSuccess={completeGoogleSignIn} onContinueWithoutAccount={continueWithoutAccount} onBack={() => { setGoogleIdToken(null); navigate('/welcome'); }} />}
       {route.type === 'app' && <Workspace {...workspaceProps} />}
       {route.type === 'share' && <PublicSharePage
         project={projectForShare}
@@ -337,7 +370,7 @@ export default function App() {
       {reuploadProject && <ReuploadModal project={reuploadProject} onClose={() => setReuploadProject(null)} onSave={(files) => handleReupload(reuploadProject, files)} onToast={addToast} />}
       {deleteProject && <ConfirmDialog title={`Delete “${deleteProject.name}”?`} body="This removes the local project record and demo share link from this browser. It does not delete an uploaded cloud copy because no cloud storage is connected." confirmLabel="Delete local record" destructive onClose={() => setDeleteProject(null)} onConfirm={() => { const selectedId = deleteProject.id; deleteProject.files.forEach((file) => forgetFile(file.id)); setProjects((current) => current.filter((project) => project.id !== selectedId)); if (detail?.id === selectedId) setDetail(null); setDeleteProject(null); addToast('Project deleted', 'Local project metadata was removed.', 'success'); }} />}
       {clearConfirmOpen && <ConfirmDialog title="Reset this demo workspace?" body="This permanently clears project metadata, imported demo items, and Vault metadata from this browser, then restores the sample workspace. Files you selected are not saved by the demo." confirmLabel="Reset demo data" destructive onClose={() => setClearConfirmOpen(false)} onConfirm={resetDemo} />}
-      {googleInfoOpen && <GoogleInfoModal onClose={() => setGoogleInfoOpen(false)} />}
+      {googleInfoOpen && <GoogleInfoModal clientConfigured={Boolean(googleClientId)} onClose={() => setGoogleInfoOpen(false)} />}
       <ToastStack toasts={toasts} onDismiss={dismissToast} />
     </>
   );

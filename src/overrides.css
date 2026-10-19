@@ -127,14 +127,14 @@
 .vault-password-unset > span { display: flex; align-items: center; gap: 8px; color: #e3d9e9; font-size: 9px; }
 .vault-password-unset > span svg { color: #d8b9ed; flex: 0 0 auto; }
 
-/* Demo sign-in screen: buttons are honest local demo actions, not OAuth. */
+/* Google Identity Services sign-in and the sign-in-free browser path. */
 .login-page { position: relative; min-height: 100vh; overflow: hidden; display: flex; flex-direction: column; background: #0b0a0e; isolation: isolate; }
 .login-background-glow { position: absolute; z-index: -1; border-radius: 50%; pointer-events: none; filter: blur(30px); }
 .login-glow-one { width: 650px; height: 500px; left: -230px; top: 8%; background: radial-gradient(ellipse, rgba(98,68,151,.27), transparent 70%); }
 .login-glow-two { width: 650px; height: 450px; right: -180px; bottom: -80px; background: radial-gradient(ellipse, rgba(169,76,138,.17), transparent 70%); }
 .login-header { width: min(100%, 1240px); margin: 0 auto; height: 72px; padding: 0 30px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,.075); }
-.login-header-demo { display: flex; align-items: center; gap: 7px; color: #ded5e5; font-size: 8px; letter-spacing: .12em; font-weight: 750; border: 1px solid rgba(221,207,238,.18); background: rgba(255,255,255,.05); border-radius: 20px; padding: 7px 10px; }
-.login-header-demo .status-pulse { width: 5px; height: 5px; background: #c38fe0; }
+.login-header-status { display: flex; align-items: center; gap: 7px; color: #ded5e5; font-size: 8px; letter-spacing: .12em; font-weight: 750; border: 1px solid rgba(221,207,238,.18); background: rgba(255,255,255,.05); border-radius: 20px; padding: 7px 10px; }
+.login-header-status .status-pulse { width: 5px; height: 5px; background: #c38fe0; }
 .login-layout { width: min(100%, 1080px); flex: 1; margin: 0 auto; padding: 42px 28px 35px; display: grid; grid-template-columns: 1.05fr .8fr; align-items: center; gap: 90px; }
 .login-story { position: relative; padding: 25px 0; }
 .login-story-pill { display: inline-flex; align-items: center; gap: 8px; padding: 7px 10px; border: 1px solid rgba(199,166,229,.2); border-radius: 40px; background: rgba(177,136,215,.09); color: #e3d5ec; font-size: 8px; letter-spacing: .08em; font-weight: 700; }
@@ -165,17 +165,24 @@
 .login-card-kicker { color: #d8b5e9; font-size: 8px; font-weight: 800; letter-spacing: .15em; }
 .login-card h2 { margin: 9px 0 7px; color: #fff; font-size: 30px; letter-spacing: -.06em; line-height: 1.05; }
 .login-card > p { margin: 0 0 20px; color: #d0c7d5; font-size: 10px; line-height: 1.7; }
-.google-demo-button { position: relative; width: 100%; min-height: 45px; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 0 12px; border: 1px solid rgba(245,237,250,.4); border-radius: 9px; background: rgba(255,255,255,.96); color: #29252d; font-size: 11px; font-weight: 650; transition: transform .18s ease, box-shadow .18s ease; }
-.google-demo-button:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(255,255,255,.16), 0 0 20px rgba(188,153,218,.19); }
-.google-glyph { width: 18px; height: 18px; }
-.google-demo-tag { position: absolute; right: 10px; padding: 3px 5px; border-radius: 4px; background: #eee4f5; color: #66447f; font-size: 6px; letter-spacing: .08em; }
+.google-signin-slot { width: 100%; min-height: 45px; }
+.google-identity-button { width: 100%; min-height: 45px; display: flex; align-items: center; justify-content: center; overflow: hidden; border-radius: 9px; }
+.google-identity-button > div { max-width: 100%; }
+.google-identity-button.google-signin-busy { pointer-events: none; opacity: .65; }
+.google-auth-button-placeholder { width: 100%; min-height: 45px; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 0 12px; border: 1px solid rgba(245,237,250,.4); border-radius: 9px; background: rgba(255,255,255,.96); color: #29252d; font-size: 11px; font-weight: 650; transition: transform .18s ease, box-shadow .18s ease, opacity .18s ease; }
+.google-auth-button-placeholder:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(255,255,255,.16), 0 0 20px rgba(188,153,218,.19); }
+.google-auth-button-placeholder:disabled { cursor: wait; opacity: .78; }
+.google-glyph { width: 18px; height: 18px; flex: 0 0 auto; }
+.login-inline-error { display: flex; align-items: flex-start; gap: 7px; margin-top: 9px; padding: 9px 10px; border: 1px solid rgba(252,155,165,.32); border-radius: 8px; background: rgba(143,45,65,.16); color: #ffd9de; font-size: 9px; line-height: 1.5; }
+.login-inline-error svg { flex: 0 0 auto; margin-top: 1px; }
+.google-auth-button-placeholder:focus-visible, .login-continue-button:focus-visible, .login-back-link:focus-visible { outline: 2px solid #d4b4ff; outline-offset: 3px; }
 .login-divider { display: flex; align-items: center; gap: 10px; margin: 16px 0; color: #b7adbd; }
 .login-divider span { height: 1px; background: rgba(236,226,244,.18); flex: 1; }
 .login-divider small { font-size: 7px; letter-spacing: .12em; }
 .login-continue-button { width: 100%; min-height: 43px; justify-content: center; font-size: 10px; }
-.login-demo-note { display: flex; align-items: flex-start; gap: 8px; padding: 10px; margin-top: 16px; border: 1px solid rgba(215,190,236,.16); border-radius: 8px; background: rgba(168,131,201,.1); color: #ddd1e4; font-size: 8px; line-height: 1.55; }
-.login-demo-note svg { color: #dfc2f3; flex: 0 0 auto; }
-.login-demo-note strong { color: #fff; }
+.login-local-note { display: flex; align-items: flex-start; gap: 8px; padding: 10px; margin-top: 16px; border: 1px solid rgba(215,190,236,.16); border-radius: 8px; background: rgba(168,131,201,.1); color: #ddd1e4; font-size: 8px; line-height: 1.55; }
+.login-local-note svg { color: #dfc2f3; flex: 0 0 auto; }
+.login-local-note strong { color: #fff; }
 .login-back-link { display: flex; align-items: center; gap: 6px; margin: 15px auto 0; border: 0; background: none; color: #d4c8dc; font-size: 9px; }
 .login-back-link:hover { color: #fff; text-shadow: 0 0 12px rgba(255,255,255,.3); }
 .login-policy-note { display: flex; align-items: center; justify-content: center; gap: 6px; padding-top: 14px; margin-top: 13px; border-top: 1px solid rgba(255,255,255,.09); color: #c1b7c8; font-size: 7px; }

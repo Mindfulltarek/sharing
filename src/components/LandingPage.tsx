@@ -10,11 +10,11 @@ export default function LandingPage({ onOpenApp, onOpenVault }: { onOpenApp: () 
     ['Features', '#features'], ['How it works', '#how-it-works'], ['Privacy', '#privacy'], ['FAQ', '#faq'],
   ];
   const faqs = [
-    ['Can I protect a link with a password?', 'Yes. A project can be shared openly, protected with a password, or kept private. In this demo, the password gate runs in your browser; production password checks must be enforced by a server.'],
-    ['What happens when a project expires?', 'The demo disables the share page when its expiration time passes and keeps the owner’s local project metadata available for re-upload. No cloud copy exists in demo mode, so no server-side deletion is being claimed.'],
-    ['Can recipients download one file or everything?', 'The shared page offers individual downloads and a ZIP download for available files. Files selected in this browser are available for the current session; browser storage is not used for large file contents.'],
-    ['Are Vault files private?', 'Vault entries are kept separate from public projects and can never create a link or QR code. The local demo asks for a separate Vault passphrase, but it is not production-grade encrypted storage.'],
-    ['Is Google sign-in available?', 'Not yet. You can explore the complete demo workspace immediately without signing in. Google authentication is a future integration, not an active feature.'],
+    ['Can I protect a link with a password?', 'Projects can use open, password-protected, or private access. Protected links should be verified before project details or file names are shown.'],
+    ['What happens when a project expires?', 'With cloud storage configured, the API stops access when a share expires. Physical file cleanup follows the configured storage schedule.'],
+    ['Can recipients download one file or everything?', 'A shared project can offer individual file downloads and a ZIP download when those files are available.'],
+    ['Are Vault files private?', 'Vault entries stay separate from public projects and cannot create links or QR codes. File contents are not client-side encrypted, so review your storage setup before adding sensitive material.'],
+    ['Can I sign in with Google?', 'Google sign-in requires matching website and server client IDs, an authorized site origin, and a configured backend. You can also continue without an account.'],
   ];
 
   return (
@@ -42,21 +42,21 @@ export default function LandingPage({ onOpenApp, onOpenVault }: { onOpenApp: () 
             <h1>Your files.<br /><span className="hero-gradient-text">One simple share.</span></h1>
             <p>Create a project, share one link, and let people download exactly what you choose.</p>
             <div className="hero-actions">
-              <button className="button button-primary button-large" onClick={onOpenApp}>Explore the demo <ArrowRight size={17} /></button>
+              <button className="button button-primary button-large" onClick={onOpenApp} >Open your workspace <ArrowRight size={17} /></button>
               <a href="#features" className="button button-quiet button-large">See how it works <ArrowDown size={16} /></a>
             </div>
             <div className="hero-reassurance"><span className="tiny-check"><Check size={12} /></span> No sign-in needed <span className="reassurance-dot">·</span> Runs locally in this browser</div>
           </div>
-          <div className="landing-dashboard-wrap" aria-label="Preview of the Sharing demo workspace">
+          <div className="landing-dashboard-wrap" aria-label="Preview of the Sharing workspace">
             <div className="preview-orbit preview-orbit-one" />
             <div className="preview-orbit preview-orbit-two" />
             <DashboardPreview />
             <div className="hero-floating-elements" aria-hidden="true">
-              <div className="hero-floating-file-card"><span className="hero-file-art-icon"><FileImage size={20} /></span><span className="hero-floating-copy"><small>SAMPLE PROJECT</small><strong>Visual assets</strong><span>4 files · Local demo</span></span><span className="hero-floating-check"><Check size={13} /></span></div>
-              <div className="hero-floating-link-card"><span className="hero-floating-link-icon"><Link2 size={16} /></span><span><small>DEMO SHARE</small><strong>One clear handoff</strong></span><span className="hero-floating-status" /></div>
+              <div className="hero-floating-file-card"><span className="hero-file-art-icon"><FileImage size={20} /></span><span className="hero-floating-copy"><small>SAMPLE PROJECT</small><strong>Visual assets</strong><span>4 files · Preview</span></span><span className="hero-floating-check"><Check size={13} /></span></div>
+              <div className="hero-floating-link-card"><span className="hero-floating-link-icon"><Link2 size={16} /></span><span><small>SHARE LINK</small><strong>One clear handoff</strong></span><span className="hero-floating-status" /></div>
               <div className="hero-art-spark hero-art-spark-one">✦</div><div className="hero-art-spark hero-art-spark-two">✧</div>
             </div>
-            <div className="preview-caption"><span className="caption-live-dot" /> Your workspace, at a glance <span className="caption-demo">DEMO PREVIEW</span></div>
+            <div className="preview-caption"><span className="caption-live-dot" /> Your workspace, at a glance <span className="caption-preview">WORKSPACE PREVIEW</span></div>
           </div>
           <div className="hero-bottom-fade" />
         </section>
@@ -79,7 +79,7 @@ export default function LandingPage({ onOpenApp, onOpenVault }: { onOpenApp: () 
             <Feature icon={<FolderOpen />} number="01" title="Projects with purpose" description="Keep related files together in one named, easy-to-find handoff." className="feature-wide" />
             <Feature icon={<Link2 />} number="02" title="One link, your way" description="Share a link or QR code, with optional password protection and an expiration." />
             <Feature icon={<Download />} number="03" title="Download what you need" description="Recipients can grab one file or the whole available project as a ZIP." />
-            <Feature icon={<Eye />} number="04" title="A useful activity view" description="See project views and downloads. Demo numbers are clearly labeled as sample data." />
+            <Feature icon={<Eye />} number="04" title="A useful activity view" description="Review project activity at a glance when connected to your workspace." />
             <Feature icon={<LockKeyhole />} number="05" title="A Vault that stays separate" description="Private Vault items never become a public link, QR code, or project export." className="feature-wide feature-vault" />
           </div>
         </section>
@@ -89,7 +89,7 @@ export default function LandingPage({ onOpenApp, onOpenVault }: { onOpenApp: () 
             <div className="section-kicker">THREE STEPS, THAT’S IT</div>
             <h2>From files to<br />a finished handoff.</h2>
             <p>Make a tidy project, choose how it can be accessed, and share it with confidence.</p>
-            <button className="button button-secondary" onClick={onOpenApp}>Try the demo <ArrowRight size={16} /></button>
+            <button className="button button-secondary" onClick={onOpenApp} >Open your workspace <ArrowRight size={16} /></button>
           </div>
           <div className="steps-list">
             <Step number="01" icon={<Box />} title="Create a project" text="Choose files or a folder, then give the handoff a name." />
@@ -137,7 +137,7 @@ export default function LandingPage({ onOpenApp, onOpenVault }: { onOpenApp: () 
             <div className="section-kicker">PRIVATE MEANS PRIVATE</div>
             <h2>A separate place<br />for what <span className="hero-gradient-text">isn’t for sharing.</span></h2>
             <p>The Vault is intentionally outside your project workflow. It has its own unlock step, and Vault entries can’t generate public links, QR codes, or exports.</p>
-            <div className="vault-disclaimer"><ShieldCheck size={18} /><span><strong>Honest about the demo.</strong> Vault metadata stays in this browser. This prototype does not claim production-grade encryption or secure cloud storage.</span></div>
+            <div className="vault-disclaimer"><ShieldCheck size={18} /><span><strong>Privacy by separation.</strong> Vault items stay out of share links. File contents are not client-side encrypted; review your storage setup before adding sensitive material.</span></div>
             <button className="button button-secondary" onClick={onOpenVault}>Explore the Vault <ArrowRight size={16} /></button>
           </div>
           <div className="vault-visual">
@@ -151,12 +151,12 @@ export default function LandingPage({ onOpenApp, onOpenVault }: { onOpenApp: () 
 
         <section className="privacy-note section-block">
           <div className="privacy-icon"><Clock3 size={22} /></div>
-          <div><div className="section-kicker">CLEAR EXPIRATION, NO SURPRISES</div><h2>When a share ends, it ends.</h2><p>In this demo, expiration disables the public view while your project record remains available for re-upload. There is no cloud copy to delete. Real server-side storage and deletion will need a configured backend.</p></div>
+          <div><div className="section-kicker">CLEAR EXPIRATION, NO SURPRISES</div><h2>When a share ends, it ends.</h2><p>With cloud storage configured, expired links stop working immediately. Physical file cleanup follows the storage schedule and is not an exact-time erasure guarantee.</p></div>
           <button className="text-link-button" onClick={onOpenApp}>See it in the workspace <ArrowUpRight size={15} /></button>
         </section>
 
         <section className="section-block faq-section" id="faq">
-          <div className="faq-intro"><div className="section-kicker">GOOD TO KNOW</div><h2>Questions, answered.</h2><p>Here’s what the current demo can and can’t do.</p><div className="faq-callout"><HelpCircle size={17} /><span>Have a question about an integration? It’s likely noted in the demo settings.</span></div></div>
+          <div className="faq-intro"><div className="section-kicker">GOOD TO KNOW</div><h2>Questions, answered.</h2><p>Clear answers about access, privacy, and sharing.</p><div className="faq-callout"><HelpCircle size={17} /><span>Need help with account or storage setup? Check your deployment settings.</span></div></div>
           <div className="faq-list">
             {faqs.map(([question, answer], index) => (
               <div className={`faq-item${faqOpen === index ? ' faq-item-open' : ''}`} key={question}>
@@ -174,14 +174,14 @@ export default function LandingPage({ onOpenApp, onOpenVault }: { onOpenApp: () 
           <div className="closing-mark"><span className="brand-mark"><span /></span></div>
           <div className="section-kicker">READY WHEN YOU ARE</div>
           <h2>Make the next handoff<br /><span className="hero-gradient-text">feel effortless.</span></h2>
-          <p>Explore Sharing in a local demo workspace. No account or setup required.</p>
+          <p>Open your workspace or sign in with Google when it’s configured.</p>
           <button className="button button-primary button-large" onClick={onOpenApp}>Open Sharing <ArrowRight size={17} /></button>
         </section>
       </main>
 
       <footer className="marketing-footer">
         <div className="footer-top"><Logo small /><span className="footer-tagline">Thoughtful sharing, one project at a time.</span><a className="footer-open" href="#top">Back to top <ArrowUpRight size={14} /></a></div>
-        <div className="footer-bottom"><span>© 2026 Sharing · Browser demo</span><span className="footer-credit">Developed by <a href="https://www.instagram.com/mindfulltarek/" target="_blank" rel="noreferrer">TAREK <ArrowUpRight size={12} /></a></span></div>
+        <div className="footer-bottom"><span>© 2026 Sharing</span><span className="footer-credit">Developed by <a href="https://www.instagram.com/mindfulltarek/" target="_blank" rel="noreferrer">TAREK <ArrowUpRight size={12} /></a></span></div>
       </footer>
     </div>
   );
@@ -193,7 +193,7 @@ function DashboardPreview() {
       <div className="preview-topbar">
         <div className="preview-brand"><span className="mini-mark">S</span><span>sharing<span className="brand-period">.</span></span></div>
         <div className="preview-breadcrumb">Workspace <span>/</span> Projects</div>
-        <div className="preview-profile"><span className="preview-profile-dot">D</span><span>Demo User</span><ChevronDown size={12} /></div>
+        <div className="preview-profile"><span className="preview-profile-dot">D</span><span>Your account</span><ChevronDown size={12} /></div>
       </div>
       <div className="preview-main-layout">
         <div className="preview-sidebar">
@@ -201,14 +201,14 @@ function DashboardPreview() {
           <div className="preview-side-item preview-side-active"><FolderOpen size={14} /> Projects <span>4</span></div>
           <div className="preview-side-item"><Link2 size={14} /> Shared with me</div>
           <div className="preview-side-item"><LockKeyhole size={14} /> Vault</div>
-          <div className="preview-side-bottom"><div className="preview-side-item"><ShieldCheck size={14} /> Demo workspace</div></div>
+          <div className="preview-side-bottom"><div className="preview-side-item"><ShieldCheck size={14} /> Workspace preview</div></div>
         </div>
         <div className="preview-content">
-          <div className="preview-welcome-row"><div><span className="preview-eyebrow">LOCAL DEMO WORKSPACE</span><h3>Your projects</h3><p>Keep every handoff in one place.</p></div><div className="preview-create"><span>+</span> New project</div></div>
-          <div className="preview-mini-stats"><div><span>Active projects</span><strong>3</strong></div><div><span>Shared views <i>sample</i></span><strong>415</strong></div><div><span>Downloads <i>sample</i></span><strong>73</strong></div></div>
+          <div className="preview-welcome-row"><div><span className="preview-eyebrow">WORKSPACE PREVIEW</span><h3>Your projects</h3><p>Keep every handoff in one place.</p></div><div className="preview-create"><span>+</span> New project</div></div>
+          <div className="preview-mini-stats"><div><span>Active projects</span><strong>—</strong></div><div><span>Shared views</span><strong>—</strong></div><div><span>Downloads</span><strong>—</strong></div></div>
           <div className="preview-list-head"><span>RECENT PROJECTS</span><span>UPDATED <ChevronDown size={11} /></span></div>
-          <PreviewProject name="Northstar identity kit" files="4 files · 5.4 KB" views="128" downloads="22" type="svg" />
-          <PreviewProject name="Kyoto field notes" files="4 files · 3.1 KB" views="76" downloads="14" type="md" protected />
+          <PreviewProject name="Northstar identity kit" files="4 files · 5.4 KB" views="—" downloads="—" type="svg" />
+          <PreviewProject name="Kyoto field notes" files="4 files · 3.1 KB" views="—" downloads="—" type="md" protected />
           <PreviewProject name="Lumen launch pack" files="4 files · 4.8 KB" views="—" downloads="—" type="csv" private />
         </div>
       </div>
